@@ -1,0 +1,21 @@
+{
+  "name": "tc002-now-playing",
+  "version": "1.0.0",
+  "description": "Multi-source Now Playing bridge (macOS Now Playing, Spotify) with 16x16 album art for Ulanzi TC002 running AWTRIX NG",
+  "type": "module",
+  "main": "src/index.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.9.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "dev": "node --env-file-if-exists=.env --watch src/index.js",
+    "agent": "node agent/mac-now-playing-agent.mjs",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "awtrix-ng-api": "^0.5.0",
+    "sharp": "^0.34.0"
+  }
+}

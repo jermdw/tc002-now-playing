@@ -1,0 +1,14 @@
+services:
+  tc002-now-playing:
+    build: .
+    container_name: tc002-now-playing
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8765}:${PORT:-8765}"
+    env_file:
+      - .env
+    volumes:
+      - now_playing_data:/app/data
+
+volumes:
+  now_playing_data:
