@@ -72,6 +72,22 @@ npm install && npm start
 
 The bridge installs `now_playing.be` on the clock automatically. Open `http://<bridge-ip>:8765` to see a live simulator and the status of each source.
 
+#### Or: a Proxmox LXC container
+
+Instead of Docker, the bridge can run directly under Node in a small unprivileged container (1 core, 512 MB, 4 GB disk; it uses about 50 MB). From your Mac, in this checkout, with SSH key access to the Proxmox host as root:
+
+```bash
+./deploy/proxmox/deploy.sh root@<proxmox-ip> --awtrix-host <clock-ip>
+```
+
+The first run creates the container from the cached Ubuntu 24.04 template, installs Node 22 from NodeSource's apt repository, runs the bridge as a `systemd` service under its own user, and writes `/etc/tc002-now-playing.env` with a fresh `PUSH_TOKEN`. It ships the committed code over SSH, so the container needs no GitHub access. Run it again after pulling changes to update; the config and data are kept. It prints the container's IP: reserve that address in your router, because the clock and the agent are pointed at it.
+
+To fetch the token for the agent:
+
+```bash
+ssh root@<proxmox-ip> 'pct exec <ctid> -- grep ^PUSH_TOKEN= /etc/tc002-now-playing.env'
+```
+
 ### 4. Run the agent on your Mac
 
 Try it in the foreground first:

@@ -37,7 +37,7 @@ fi
 pve() { ssh -o BatchMode=yes "$PVE" "$@"; }
 ct() { pve pct exec "$CTID" -- "$@"; }
 # SSH flattens arguments into one string, so anything with quoting goes in as a script on stdin.
-ct_script() { pve "pct exec $CTID -- bash -s"; }
+ct_script() { pve "pct exec $CTID -- env LC_ALL=C.UTF-8 bash -s"; }
 
 if [ -z "$CTID" ]; then
   CTID="$(pve "pct list | awk '\$NF == \"$HOSTNAME_CT\" {print \$1}'" | head -1)"
@@ -92,7 +92,7 @@ git -C "$REPO_ROOT" archive --format=tar HEAD src berry package.json package-loc
 ct_script <<'SCRIPT'
   set -e
   cd /opt/tc002-now-playing.new
-  npm ci --omit=dev --no-audit --no-fund --loglevel=error
+  npm ci --omit=dev --no-audit --no-fund --no-update-notifier --loglevel=error
   install -m 0644 deploy/proxmox/tc002-now-playing.service /etc/systemd/system/tc002-now-playing.service
   rm -rf /opt/tc002-now-playing.old
   [ -d /opt/tc002-now-playing ] && mv /opt/tc002-now-playing /opt/tc002-now-playing.old
