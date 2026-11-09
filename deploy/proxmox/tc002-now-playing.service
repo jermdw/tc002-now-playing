@@ -1,0 +1,23 @@
+[Unit]
+Description=TC002 Now Playing bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=tc002
+Group=tc002
+WorkingDirectory=/opt/tc002-now-playing
+Environment=NODE_ENV=production
+Environment=DATA_DIR=/var/lib/tc002-now-playing
+ExecStart=/usr/bin/node --env-file-if-exists=/etc/tc002-now-playing.env src/index.js
+Restart=always
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/tc002-now-playing
+
+[Install]
+WantedBy=multi-user.target
