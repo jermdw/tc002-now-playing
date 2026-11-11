@@ -512,6 +512,36 @@ test('AwtrixCoordinator enables app, switches on track change, and hides on paus
   coord.dispose();
 });
 
+test('AwtrixCoordinator falls back to the apps-order route on firmware without /enabled', async () => {
+  const calls = [];
+  const apps = [
+    { name: 'Time', enabled: true, slot: 0 },
+    { name: 'Date', enabled: false, slot: null },
+    { name: 'now-playing', enabled: true, slot: 1 },
+  ];
+  const client = {
+    apps: {
+      setEnabled: async () => {
+        calls.push('setEnabled');
+        throw new Error('400 invalidName');
+      },
+      list: async () => apps,
+      setOrder: async (body) => calls.push(body),
+    },
+  };
+  const coord = new AwtrixCoordinator({ host: 'clock', client });
+
+  await coord._setAppEnabled(client, false);
+  await coord._setAppEnabled(client, true);
+
+  assert.deepEqual(calls, [
+    'setEnabled',
+    { order: ['Time', 'now-playing'], disabled: ['Date', 'now-playing'] },
+    { order: ['Time', 'now-playing'], disabled: ['Date'] },
+  ]);
+  coord.dispose();
+});
+
 async function withServer(env, fn) {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'tc002-srv-test-'));
   const config = loadConfig({ PORT: '0', DATA_DIR: tmpDir, SERVER_LAN_URL: 'http://192.168.1.100:8765', ...env });

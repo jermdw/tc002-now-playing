@@ -63,25 +63,36 @@ export class AwtrixCoordinator {
   }
 
   async _setAppEnabled(client, enabled) {
-    if (typeof client.apps?.setEnabled === 'function') {
-      await client.apps.setEnabled(this.appName, enabled);
-      return;
-    }
-    if (!enabled && typeof client.apps?.disable === 'function') {
-      await client.apps.disable(this.appName);
-      return;
-    }
-    if (typeof client.apps?.list === 'function' && typeof client.apps?.setOrder === 'function') {
-      const list = await client.apps.list();
-      if (Array.isArray(list)) {
-        const order = list.map((item) => {
-          const name = typeof item === 'string' ? item : item.name;
-          const curEnabled = typeof item === 'object' && item !== null ? Boolean(item.enabled ?? true) : true;
-          return { name, enabled: name === this.appName ? enabled : curEnabled };
-        });
-        await client.apps.setOrder(order);
+    // PUT /apps/{name}/enabled only exists on firmware 1.2.2+; older firmware answers 400.
+    // After the first failure, use the apps-order route that every version supports.
+    if (this.perAppEnabledRoute !== false && typeof client.apps?.setEnabled === 'function') {
+      try {
+        await client.apps.setEnabled(this.appName, enabled);
+        this.perAppEnabledRoute = true;
+        return;
+      } catch (err) {
+        if (this.perAppEnabledRoute === true) throw err;
+        this.perAppEnabledRoute = false;
       }
     }
+    await this._setAppEnabledViaOrder(client, enabled);
+  }
+
+  /** PUT /api/v1/apps/order with the current slot order and the disabled list adjusted for this app. */
+  async _setAppEnabledViaOrder(client, enabled) {
+    const list = await client.apps.list();
+    const apps = (Array.isArray(list) ? list : []).filter((a) => a && typeof a.name === 'string');
+    // Only apps that already have a slot, so the call doesn't give other apps a place in the loop.
+    const order = apps
+      .filter((a) => Number.isInteger(a.slot))
+      .sort((a, b) => a.slot - b.slot)
+      .map((a) => a.name);
+    if (!order.includes(this.appName)) order.push(this.appName);
+    const disabled = apps
+      .filter((a) => a.enabled === false && a.name !== this.appName)
+      .map((a) => a.name);
+    if (!enabled) disabled.push(this.appName);
+    await client.apps.setOrder({ order, disabled });
   }
 
   async ensureScriptInstalled() {
