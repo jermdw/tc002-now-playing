@@ -214,17 +214,20 @@ class NowPlaying
       text_x = 0
     end
 
-    # 1. Draw Title (top line) and Artist (second line) first
+    # 1. Draw Title (top line) and Artist (second line) first.
+    # text() takes the baseline as y, so with the 5px small font the rows sit on y=6 and y=13,
+    # leaving row 14 empty above the progress bar on row 15.
+    font("small")
     if now_ms() < self.badge_until && size(self.badge_text) > 0
       var bw = text_ink_width(self.badge_text)
       var bx = text_x + (avail_w - bw) / 2
-      text(bx, 4, self.badge_text, 0xFFFFFF)
+      text(bx, 10, self.badge_text, 0xFFFFFF)
     else
       if h >= 16
-        self.draw_scrolling_line(text_x, 1, avail_w, self.title, 0xFFFFFF, 0)
-        self.draw_scrolling_line(text_x, 8, avail_w, self.artist, self.accent, 600)
+        self.draw_scrolling_line(text_x, 6, avail_w, self.title, 0xFFFFFF, 0)
+        self.draw_scrolling_line(text_x, 13, avail_w, self.artist, self.accent, 600)
       else
-        self.draw_scrolling_line(text_x, 1, avail_w, self.title + " - " + self.artist, 0xFFFFFF, 0)
+        self.draw_scrolling_line(text_x, h - 2, avail_w, self.title + " - " + self.artist, 0xFFFFFF, 0)
       end
     end
 
